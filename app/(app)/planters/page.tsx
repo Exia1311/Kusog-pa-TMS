@@ -1,6 +1,9 @@
 import Link from 'next/link'
 import {sb} from '@/lib/supabase/server'
 import PlanterTable from '@/components/PlanterTable'
+
+export const dynamic = 'force-dynamic'
+
 export default async function Planters({searchParams}:{searchParams:{q?:string}}){
   const s=sb(); const {data:{user}}=await s.auth.getUser(); const {data:me}=await s.from('profiles').select('role').eq('id',user!.id).single()
   const {data:a}=await s.auth.mfa.getAuthenticatorAssuranceLevel(); const admin=me?.role==='admin',canEdit=admin&&a?.currentLevel==='aal2'

@@ -1,6 +1,9 @@
 import Link from 'next/link'
 import {sb} from '@/lib/supabase/server'
 import {voidTicket} from '@/app/actions'
+
+export const dynamic = 'force-dynamic'
+
 export default async function Tickets({searchParams}:{searchParams:{q?:string}}){
   const s=sb(); let qb=s.from('tickets').select('id,barcode_number,created_at,planter_name,driver_name,truck_plate_no').is('deleted_at',null).order('created_at',{ascending:false}).limit(25)
   const q=(searchParams.q||'').replace(/[%,()]/g,''); if(q) qb=qb.or(`barcode_number.ilike.%${q}%,planter_name.ilike.%${q}%,driver_name.ilike.%${q}%,truck_plate_no.ilike.%${q}%`)

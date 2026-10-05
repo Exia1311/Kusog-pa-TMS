@@ -2,6 +2,9 @@ import {createClient} from '@supabase/supabase-js'
 import {requireAdmin} from '@/lib/auth'
 import UserCreate from '@/components/UserCreate'
 import {setRole,setActive} from '@/app/user-actions'
+
+export const dynamic = 'force-dynamic'
+
 export default async function Users(){
   const {user}=await requireAdmin()
   const a=createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!,process.env.SUPABASE_SERVICE_ROLE_KEY!,{auth:{persistSession:false}})

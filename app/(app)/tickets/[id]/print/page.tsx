@@ -2,6 +2,9 @@ import {notFound} from 'next/navigation'
 import {sb} from '@/lib/supabase/server'
 import Copy from '@/components/Copy'
 import PrintButton from '@/components/PrintButton'
+
+export const dynamic = 'force-dynamic'
+
 export default async function Print({params}:{params:{id:string}}){
   const s=sb(); const {data:t}=await s.from('tickets').select('*').eq('id',params.id).single(); if(!t) notFound()
   const {count}=await s.from('ticket_prints').select('*',{count:'exact',head:true}).eq('ticket_id',t.id)

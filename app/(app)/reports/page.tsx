@@ -2,6 +2,9 @@ import Link from 'next/link'
 import {requireAdmin} from '@/lib/auth'
 import Cards from '@/components/Cards'
 import PrintBtn from '@/components/PrintBtn'
+
+export const dynamic = 'force-dynamic'
+
 const T:Record<string,[string,string]>={daily:['Daily','Date'],weekly:['Weekly','Week starting (Mon)'],monthly:['Monthly','Month']}
 export default async function Reports({searchParams}:{searchParams:{p?:string}}){
   const {s}=await requireAdmin(); const p=['weekly','monthly'].includes(searchParams.p||'')?searchParams.p!:'daily'

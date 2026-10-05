@@ -1,0 +1,73 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg: #f3f7fb;
+  --panel: rgba(255,255,255,0.96);
+  --panel-strong: #ffffff;
+  --ink: #0f172a;
+  --muted: #64748b;
+  --line: #dfe7f1;
+  --brand: #0f766e;
+  --brand-dark: #0b5d59;
+  --brand-soft: #dcf9f5;
+  --accent: #f59e0b;
+  --success: #16a34a;
+  --danger: #dc2626;
+}
+
+body {
+  @apply min-h-screen bg-slate-100 text-slate-900 antialiased;
+  background: linear-gradient(180deg, #edf5fb 0%, #f8fafc 100%);
+}
+
+* { box-sizing: border-box; }
+
+input, select, textarea {
+  @apply border border-slate-300 rounded-xl px-3.5 py-2.5 w-full bg-white text-sm text-slate-700 transition duration-200 ease-in-out;
+}
+
+input:focus, select:focus, textarea:focus {
+  @apply outline-none ring-2 ring-teal-200 border-teal-500;
+}
+
+.btn {
+  @apply inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-teal-700 to-teal-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition duration-200 hover:from-teal-800 hover:to-teal-700 disabled:cursor-not-allowed disabled:opacity-60;
+}
+
+.btn-secondary {
+  @apply border border-slate-300 bg-white text-slate-700 shadow-sm hover:bg-slate-50 hover:text-slate-900;
+}
+
+.btn-danger {
+  @apply bg-gradient-to-r from-red-600 to-red-500 text-white shadow-sm hover:from-red-700 hover:to-red-600;
+}
+
+.card {
+  @apply bg-white border border-slate-200 shadow-sm rounded-2xl;
+}
+
+.section-title {
+  @apply text-2xl font-bold tracking-tight text-slate-900;
+}
+
+.sidebar-link {
+  @apply flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-zinc-400 transition duration-200 hover:bg-white/5 hover:text-zinc-200;
+}
+
+.sidebar-link.active {
+  @apply bg-gradient-to-r from-emerald-500 to-green-500 text-white shadow-[0_0_18px_rgba(16,185,129,0.45)];
+}
+
+.sidebar-link.active svg,
+.sidebar-link.active span {
+  @apply text-white;
+}
+
+@media print {
+  .noprint, aside { display: none !important; }
+  main { padding: 0 !important; }
+  .copy { break-inside: avoid; }
+}
+

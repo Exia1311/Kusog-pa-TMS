@@ -21,6 +21,26 @@ export async function setActive(id:string,active:boolean){
   await a.auth.admin.updateUserById(id,{ban_duration:active?'none':'876000h'})
   await log(a,user.id,active?'user_reactivated':'user_deactivated',id); revalidatePath('/users')}
 
+export async function updateUserDetails(id:string, payload:{full_name:string; email:string; role:string}){
+  const {user}=await requireAdmin(); if(id===user.id) return
+  const a=adm()
+  const full_name=payload.full_name.trim()
+  const email=payload.email.trim()
+  const role=payload.role==='admin'?'admin':'dispatcher'
+
+  if(!full_name || !email){
+    throw new Error('Name and email are required.')
+  }
+
+  await a.from('profiles').update({full_name, role}).eq('id', id)
+  await a.auth.admin.updateUserById(id, {
+    email,
+    user_metadata: { full_name }
+  })
+  await log(a,user.id,'user_updated',id,{full_name,email,role})
+  revalidatePath('/users')
+}
+
 export async function deleteUser(id:string){
   const {user}=await requireAdmin(); if(id===user.id) return
   const a=adm()

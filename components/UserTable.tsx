@@ -2,7 +2,7 @@
 
 import {useState} from 'react'
 import ActionModal from '@/components/ActionModal'
-import {deleteUser, setActive, setRole} from '@/app/user-actions'
+import {deleteUser, setActive, updateUserDetails} from '@/app/user-actions'
 
 type UserRow = {
   id: string
@@ -28,7 +28,7 @@ export default function UserTable({users, emails, currentUserId}: UserTableProps
     onConfirm?: () => void | Promise<void>
   }>({open: false, title: '', message: ''})
   const [editingId, setEditingId] = useState<string | null>(null)
-  const [draftRole, setDraftRole] = useState('dispatcher')
+  const [draft, setDraft] = useState({full_name: '', email: '', role: 'dispatcher'})
 
   const closeModal = () => setModal({open: false, title: '', message: ''})
 
@@ -48,24 +48,33 @@ export default function UserTable({users, emails, currentUserId}: UserTableProps
     })
   }
 
-  const handleEdit = (user: UserRow) => {
+  const startEdit = (user: UserRow) => {
     setEditingId(user.id)
-    setDraftRole(user.role)
-    setModal({
-      open: true,
-      title: 'Edit user role',
-      message: `Update the role for ${user.full_name}.`,
-      variant: 'info',
-      confirmText: 'Save changes',
-      cancelText: 'Cancel',
-      onConfirm: async () => {
-        const fd = new FormData()
-        fd.append('role', draftRole)
-        await setRole(user.id, fd)
-        openSuccess('User updated', `${user.full_name} is now a ${draftRole}.`)
-        setEditingId(null)
-      },
+    setDraft({
+      full_name: user.full_name,
+      email: emails[user.id] || '',
+      role: user.role,
     })
+  }
+
+  const saveEdit = async (user: UserRow) => {
+    try {
+      await updateUserDetails(user.id, {
+        full_name: draft.full_name,
+        email: draft.email,
+        role: draft.role,
+      })
+      setEditingId(null)
+      openSuccess('User updated', `${draft.full_name} was updated successfully.`)
+    } catch (error: any) {
+      setModal({
+        open: true,
+        title: 'Update failed',
+        message: error?.message || 'Unable to save changes.',
+        variant: 'danger',
+        confirmText: 'Dismiss',
+      })
+    }
   }
 
   const handleDelete = (user: UserRow) => {
@@ -109,35 +118,46 @@ export default function UserTable({users, emails, currentUserId}: UserTableProps
           <tbody>
             {users.map((user) => {
               const isCurrent = user.id === currentUserId
+              const isEditing = editingId === user.id
+
               return (
                 <tr key={user.id} className="border-t border-slate-200 transition hover:bg-slate-50">
-                  <td className="px-4 py-3 text-slate-700">{user.full_name}</td>
-                  <td className="px-4 py-3 text-slate-700">{emails[user.id] || '—'}</td>
+                  <td className="px-4 py-3 text-slate-700">
+                    {isEditing ? (
+                      <input
+                        value={draft.full_name}
+                        onChange={(e) => setDraft({ ...draft, full_name: e.target.value })}
+                        className="w-full rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-sm text-slate-700 outline-none transition focus:border-emerald-400 focus:bg-white focus:ring-4 focus:ring-emerald-100"
+                      />
+                    ) : (
+                      user.full_name
+                    )}
+                  </td>
+
+                  <td className="px-4 py-3 text-slate-700">
+                    {isEditing ? (
+                      <input
+                        value={draft.email}
+                        onChange={(e) => setDraft({ ...draft, email: e.target.value })}
+                        className="w-full rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-sm text-slate-700 outline-none transition focus:border-emerald-400 focus:bg-white focus:ring-4 focus:ring-emerald-100"
+                      />
+                    ) : (
+                      emails[user.id] || '—'
+                    )}
+                  </td>
 
                   <td className="px-4 py-3">
-                    {isCurrent ? (
-                      <span className="inline-flex rounded-lg border border-slate-200 bg-slate-100 px-2.5 py-1.5 text-xs font-medium text-slate-700">{user.role}</span>
+                    {isEditing ? (
+                      <select
+                        value={draft.role}
+                        onChange={(e) => setDraft({ ...draft, role: e.target.value })}
+                        className="w-32 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-sm text-slate-700 outline-none transition focus:border-emerald-400 focus:bg-white focus:ring-4 focus:ring-emerald-100"
+                      >
+                        <option value="dispatcher">dispatcher</option>
+                        <option value="admin">admin</option>
+                      </select>
                     ) : (
-                      <div className="flex items-center gap-2">
-                        <select
-                          value={editingId === user.id ? draftRole : user.role}
-                          onChange={(e) => {
-                            setDraftRole(e.target.value)
-                            setEditingId(user.id)
-                          }}
-                          className="w-32 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-sm text-slate-700 outline-none transition focus:border-emerald-400 focus:bg-white focus:ring-4 focus:ring-emerald-100"
-                        >
-                          <option value="dispatcher">dispatcher</option>
-                          <option value="admin">admin</option>
-                        </select>
-                        <button
-                          type="button"
-                          onClick={() => handleEdit(user)}
-                          className="rounded-lg border border-slate-200 bg-slate-100 px-2.5 py-1.5 text-xs font-medium text-slate-700 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700"
-                        >
-                          Set
-                        </button>
-                      </div>
+                      <span className="inline-flex rounded-lg border border-slate-200 bg-slate-100 px-2.5 py-1.5 text-xs font-medium text-slate-700">{user.role}</span>
                     )}
                   </td>
 
@@ -150,29 +170,50 @@ export default function UserTable({users, emails, currentUserId}: UserTableProps
                   <td className="px-4 py-3 whitespace-nowrap">
                     {!isCurrent && (
                       <div className="flex flex-wrap items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => handleEdit(user)}
-                          className="rounded-lg border border-slate-200 bg-slate-100 px-2.5 py-1.5 text-xs font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-200"
-                        >
-                          Edit
-                        </button>
+                        {isEditing ? (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => saveEdit(user)}
+                              className="rounded-lg border border-emerald-200 bg-emerald-50 px-2.5 py-1.5 text-xs font-medium text-emerald-700 transition hover:border-emerald-300 hover:bg-emerald-100"
+                            >
+                              Save
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setEditingId(null)}
+                              className="rounded-lg border border-slate-200 bg-slate-100 px-2.5 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-200"
+                            >
+                              Cancel
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => startEdit(user)}
+                              className="rounded-lg border border-slate-200 bg-slate-100 px-2.5 py-1.5 text-xs font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-200"
+                            >
+                              Edit details
+                            </button>
 
-                        <button
-                          type="button"
-                          onClick={() => handleDelete(user)}
-                          className="rounded-lg border border-red-200 bg-red-50 px-2.5 py-1.5 text-xs font-medium text-red-600 transition hover:border-red-300 hover:bg-red-100 hover:text-red-700"
-                        >
-                          Delete
-                        </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDelete(user)}
+                              className="rounded-lg border border-red-200 bg-red-50 px-2.5 py-1.5 text-xs font-medium text-red-600 transition hover:border-red-300 hover:bg-red-100 hover:text-red-700"
+                            >
+                              Delete
+                            </button>
 
-                        <button
-                          type="button"
-                          onClick={() => handleActivateToggle(user)}
-                          className={`rounded-lg border px-2.5 py-1.5 text-xs font-medium transition ${user.is_active ? 'border-red-200 bg-red-50 text-red-600 hover:border-red-300 hover:bg-red-100 hover:text-red-700' : 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:border-emerald-300 hover:bg-emerald-100 hover:text-emerald-800'}`}
-                        >
-                          {user.is_active ? 'Deactivate' : 'Reactivate'}
-                        </button>
+                            <button
+                              type="button"
+                              onClick={() => handleActivateToggle(user)}
+                              className={`rounded-lg border px-2.5 py-1.5 text-xs font-medium transition ${user.is_active ? 'border-red-200 bg-red-50 text-red-600 hover:border-red-300 hover:bg-red-100 hover:text-red-700' : 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:border-emerald-300 hover:bg-emerald-100 hover:text-emerald-800'}`}
+                            >
+                              {user.is_active ? 'Deactivate' : 'Reactivate'}
+                            </button>
+                          </>
+                        )}
                       </div>
                     )}
                   </td>

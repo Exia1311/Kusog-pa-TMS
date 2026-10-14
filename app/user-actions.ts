@@ -20,3 +20,12 @@ export async function setActive(id:string,active:boolean){
   await a.from('profiles').update({is_active:active}).eq('id',id)
   await a.auth.admin.updateUserById(id,{ban_duration:active?'none':'876000h'})
   await log(a,user.id,active?'user_reactivated':'user_deactivated',id); revalidatePath('/users')}
+
+export async function deleteUser(id:string){
+  const {user}=await requireAdmin(); if(id===user.id) return
+  const a=adm()
+  await a.from('profiles').delete().eq('id',id)
+  await a.auth.admin.deleteUser(id)
+  await log(a,user.id,'user_deleted',id)
+  revalidatePath('/users')
+}
